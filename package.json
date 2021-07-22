@@ -1,6 +1,6 @@
 {
   "name": "nestjs-microservice-kit",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "author": "Mahdi Rashidi <m8rashidi@gmail.com>",
   "private": true,
