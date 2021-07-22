@@ -4,7 +4,7 @@
   "description": "",
   "author": "Mahdi Rashidi <m8rashidi@gmail.com>",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
