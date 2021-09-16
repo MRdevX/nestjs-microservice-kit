@@ -6,5 +6,6 @@ const modules = [UserModule];
 
 @Module({
   imports: [CoreModule, ...modules],
+  controllers: [],
 })
 export class AppModule {}

@@ -33,7 +33,7 @@ const config = convict({
     },
     port: {
       doc: 'Database post',
-      format: Number,
+      format: 'port',
       default: 5432,
       env: 'DB_PORT',
     },

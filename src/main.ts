@@ -7,7 +7,7 @@ import { AppModule } from './app/app.module';
 import config from '@root/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ['log', 'error', 'warn'] });
   const environment = config.get('app.env');
 
   app.use(helmet());
