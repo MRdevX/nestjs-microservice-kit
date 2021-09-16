@@ -23,12 +23,6 @@ const config = convict({
       default: 3000,
       env: 'PORT',
     },
-    cors: {
-      doc: 'CORS allowed origins',
-      format: 'regexArray',
-      default: [],
-      env: 'CORS',
-    },
   },
   db: {
     host: {

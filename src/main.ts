@@ -41,7 +41,6 @@ async function bootstrap() {
   await app.listen(config.get('app.port'), config.get('app.host'), () => {
     logger.verbose(`Server started on ${config.get('app.host')}:${config.get('app.port')}, env: ${environment}`, 'App');
     logger.verbose(`Connected to db "${config.get('db.name')}"`, 'Database');
-    logger.verbose(JSON.stringify(config.get('app.cors').map((v) => v.toString())), 'CORS');
   });
 }
 process.nextTick(bootstrap);
