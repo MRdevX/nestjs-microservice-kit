@@ -1,4 +1,5 @@
 import { IsString } from 'class-validator';
+import { Exclude } from 'class-transformer';
 import { IUser } from './user.model';
 
 export class UserDto implements IUser {
@@ -10,6 +11,10 @@ export class UserDto implements IUser {
 
   @IsString()
   email: string;
+
+  @IsString()
+  @Exclude()
+  password: string;
 
   @IsString()
   title: string;

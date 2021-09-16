@@ -3,5 +3,6 @@ export interface IUser extends IBaseEntity {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
   title: string;
 }

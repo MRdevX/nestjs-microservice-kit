@@ -4,12 +4,18 @@ import { Base } from '@common/base';
 
 @Entity('users')
 export class User extends Base implements IUser {
-  @Column()
+  @Column({ nullable: true })
   firstName: string;
-  @Column()
+
+  @Column({ nullable: true })
   lastName: string;
+
   @Column()
   email: string;
+
+  @Column()
+  password: string;
+
   @Column()
   title: string;
 }
