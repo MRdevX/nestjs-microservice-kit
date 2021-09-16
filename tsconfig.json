@@ -16,6 +16,7 @@
     "noImplicitAny": false,
     "paths": {
       "@root/*": ["src/*"],
+      "@common/*": ["src/app/common/*"],
       "@test/*": ["test/*"],
       "@resources/*": ["resources/*"]
     }

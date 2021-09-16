@@ -1,12 +1,9 @@
 import { Entity } from 'typeorm';
-import { IUser } from '@models/user/user.model';
+import { IUser } from '@root/models/user/user.model';
+import { Base } from '@common/base';
 
 @Entity('users')
-export class User implements IUser {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date;
+export class User extends Base implements IUser {
   firstName: string;
   lastName: string;
   email: string;
