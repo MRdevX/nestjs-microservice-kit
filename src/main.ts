@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -9,7 +9,6 @@ import config from '@root/config';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const environment = config.get('app.env');
-  const logger = app.get(Logger);
 
   app.use(helmet());
   app.enableCors({ origin: true, credentials: true });
@@ -39,8 +38,8 @@ async function bootstrap() {
   }
 
   await app.listen(config.get('app.port'), config.get('app.host'), () => {
-    logger.verbose(`Server started on ${config.get('app.host')}:${config.get('app.port')}, env: ${environment}`, 'App');
-    logger.verbose(`Connected to db "${config.get('db.name')}"`, 'Database');
+    console.log(`Server started on ${config.get('app.host')}:${config.get('app.port')}, env: ${environment}`, 'App');
+    console.log(`Connected to db "${config.get('db.name')}"`, 'Database');
   });
 }
 process.nextTick(bootstrap);
