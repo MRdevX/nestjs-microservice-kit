@@ -1,16 +1,24 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "lib": ["esnext"],
+    "esModuleInterop": true,
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es2017",
+    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
-    "skipLibCheck": true
-  }
+    "alwaysStrict": true,
+    "noImplicitAny": false,
+    "paths": {
+      "@root/*": ["src/*"],
+      "@test/*": ["test/*"],
+      "@resources/*": ["resources/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
 }

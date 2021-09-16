@@ -1,5 +1,5 @@
 import { Entity } from 'typeorm';
-import { IUser } from '../../models/user/user.model';
+import { IUser } from '@models/user/user.model';
 
 @Entity('users')
 export class User implements IUser {
