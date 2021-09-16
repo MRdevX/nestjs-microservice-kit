@@ -1,5 +1,5 @@
 import { IToken } from './token.model';
-import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { TokenType } from './token-type.enum';
 import { Token } from '@root/app/token/token.entity';
