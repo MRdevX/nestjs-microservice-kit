@@ -635,7 +635,7 @@
     webpack "5.45.1"
     webpack-node-externals "3.0.0"
 
-"@nestjs/common@^8.0.4":
+"@nestjs/common@^8.0.0", "@nestjs/common@^8.0.4":
   version "8.0.6"
   resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-8.0.6.tgz#52157de0bde7a439b2248ffd6d5e221fd593bc93"
   integrity sha512-mSD000iYJDN2wjL2hbygCVNVvzvi3VW5EDc25gK1Bj3wUU2HR8m1qOAUBqcCaGIuvBb2cD/pnVkKklnsY0rKhw==
@@ -4305,6 +4305,15 @@ neo-async@^2.6.2:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
+
+nestjs-generic-crud@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/nestjs-generic-crud/-/nestjs-generic-crud-0.0.6.tgz#ce5d93c609f680c4b52dad91ccccc3868829c0dc"
+  integrity sha512-O1NCLU8KSXmpG3Cu92LEztVBiOdswjrdL5kB/dpCRQdnXu1y64yciTvCMduM1mpwHvSqf8nhXJWMETYp8Sm/Tw==
+  dependencies:
+    "@nestjs/common" "^8.0.0"
+    "@nestjs/swagger" "^5.0.9"
+    typeorm "^0.2.37"
 
 node-emoji@1.10.0:
   version "1.10.0"

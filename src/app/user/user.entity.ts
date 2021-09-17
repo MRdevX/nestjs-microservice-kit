@@ -16,6 +16,6 @@ export class User extends Base implements IUser {
   @Column()
   password: string;
 
-  @Column()
+  @Column({ nullable: true })
   title: string;
 }
