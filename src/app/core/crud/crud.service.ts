@@ -13,11 +13,7 @@ export class CrudService<T extends BaseEntity> {
     return await this.genericRepository.findOne(id);
   }
 
-  async create<E extends DeepPartial<T>>(entity: E): Promise<T> {
-    return await this.genericRepository.create(entity).save();
-  }
-
-  async create2(entity: DeepPartial<T>): Promise<T> {
+  async create(entity: DeepPartial<T>): Promise<T> {
     return await this.genericRepository.create(entity).save();
   }
 
