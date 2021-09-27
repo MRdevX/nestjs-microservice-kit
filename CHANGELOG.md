@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.9](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.8...v0.0.9) (2021-09-27)
+
+
+### Features
+
+* add docker support ([c29b7bf](https://github.com/MRdevX/nestjs-microservice-kit/commit/c29b7bf45d6a08d6031a67d0cc5e61f453d57069))
+* update create user ([e0f8df7](https://github.com/MRdevX/nestjs-microservice-kit/commit/e0f8df7f3f86c277dcb5a1a4d75244d92a61f8fb))
+* update microservice configs ([d72076c](https://github.com/MRdevX/nestjs-microservice-kit/commit/d72076c6e68b79f51057bfecf26b6ddf92a266f6))
+* update user controller ([f4edcb3](https://github.com/MRdevX/nestjs-microservice-kit/commit/f4edcb3f594ee44629006a0868638f40e8ec3d41))
+
 ### [0.0.8](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.7...v0.0.8) (2021-09-27)
 
 

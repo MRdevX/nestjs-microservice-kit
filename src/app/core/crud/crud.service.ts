@@ -7,18 +7,19 @@ import {
   FindManyOptions,
   FindOneOptions,
   Repository,
+  SaveOptions,
   SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
-import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ConflictException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Base } from '../../common/base';
 import { BaseEntitySearchDto } from '../../common/base/base-search.dto';
-import { IFilterField } from '../../common/interface/filter-field.interface';
 import { QueryNarrowingOperators } from '../../common/enum/query-operators.enum';
 import { IRelation } from '../../common/interface/relation.interface';
 import { SearchConfig, VirtualRelationConfig } from '../../common/interface/search.config.interface';
 import { ErrorMessage } from '../../common/enum/error-message.enum';
 import { ICrudService } from './crud.service.model';
+import { IFilterField } from '../../common/interface/filter-field.interface';
 
 export abstract class CrudService<T> implements ICrudService<T> {
   private readonly entityName = this.repository.metadata.targetName;
@@ -152,10 +153,17 @@ export abstract class CrudService<T> implements ICrudService<T> {
     throw new NotFoundException(ErrorMessage.Common.EntityNotFound(this.entityName));
   }
 
-  async create(entity: DeepPartial<T>): Promise<T> {
-    return this.repository.create(entity);
+  public async create(entity: DeepPartial<T>, options?: SaveOptions): Promise<T> {
+    try {
+      const obj: any = this.repository.create(entity);
+      return await this.repository.save(obj, options);
+    } catch (e) {
+      if (e.code === '23505') {
+        throw new ConflictException(ErrorMessage.Common.EntityAlreadyExists(this.entityName));
+      }
+      throw e;
+    }
   }
-
   async update(id: string, entity: DeepPartial<T>): Promise<UpdateResult> {
     return await this.repository.update(id, entity);
   }

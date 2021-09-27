@@ -1,0 +1,22 @@
+version: '3.5'
+
+services:
+  backend:
+    build: .
+    image: backend:latest
+    networks:
+      - backend
+    command: npm run start:dev
+    env_file:
+      - ./.env
+    volumes:
+      - ./:/usr/src/backend
+      - /usr/src/backend/node_modules
+    ports:
+      - 3000:3000
+
+networks:
+  backend:
+    driver: overlay
+    driver_opts:
+      encrypted: 'true'

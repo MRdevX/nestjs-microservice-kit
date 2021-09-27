@@ -7,17 +7,20 @@ import { AppModule } from './app/app.module';
 import config from '@root/config';
 
 async function bootstrap() {
+  const env = config.get('app.env');
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ['log', 'error', 'warn'] });
-  const environment = config.get('app.env');
+
+  app.connectMicroservice(config.get('s2s'));
 
   app.use(helmet());
-  app.enableCors({ origin: true, credentials: true });
+  app.set('trust proxy', 1);
+  app.enableCors({ origin: config.get('app.cors'), credentials: true });
 
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      disableErrorMessages: environment === 'production',
+      disableErrorMessages: env === 'production',
       transform: true,
       transformOptions: {
         enableImplicitConversion: true,
@@ -25,7 +28,7 @@ async function bootstrap() {
     }),
   );
 
-  if (environment !== 'production') {
+  if (env !== 'production') {
     const options = new DocumentBuilder()
       .setTitle(process.env.npm_package_name)
       .setVersion(process.env.npm_package_version)
@@ -34,12 +37,15 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, options);
-    SwaggerModule.setup('api/v1/docs', app, document);
+    SwaggerModule.setup('api/v1/doc', app, document);
   }
 
+  await app.startAllMicroservices();
   await app.listen(config.get('app.port'), config.get('app.host'), () => {
-    console.log(`Server started on ${config.get('app.host')}:${config.get('app.port')}, env: ${environment}`, 'App');
-    console.log(`Connected to db "${config.get('db.name')}"`, 'Database');
+    console.info(`Server started on ${config.get('app.host')}:${config.get('app.port')}, env: ${env}`, 'App');
+    console.info(`Connected to db "${config.get('db.name')}"`, 'Database');
+    console.info(JSON.stringify(config.get('app.cors').map((v) => v.toString())), 'CORS');
   });
 }
+
 process.nextTick(bootstrap);

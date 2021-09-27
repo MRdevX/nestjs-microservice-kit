@@ -1,21 +1,48 @@
-import { IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IUser } from './user.model';
+import { ApiProperty, OmitType, PartialType, PickType, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UserDto implements IUser {
+export class CreateUserDto implements IUser {
+  id?: string;
+
+  @ApiPropertyOptional({
+    description: 'User First Name.',
+    example: 'Ralph',
+  })
   @IsString()
+  @IsOptional()
   firstName: string;
 
+  @ApiPropertyOptional({
+    description: 'User Last Name.',
+    example: 'Remington',
+  })
   @IsString()
+  @IsOptional()
   lastName: string;
 
-  @IsString()
+  @ApiProperty({
+    description: 'User Email Address.',
+    example: 'ralphremington@gmail.com',
+  })
+  @IsEmail()
   email: string;
 
+  @ApiProperty({
+    description: 'User Password',
+    example: '123456',
+  })
   @IsString()
-  @Exclude()
   password: string;
 
+  @ApiPropertyOptional({
+    description: 'User Title.',
+    example: 'Backend Engineer',
+  })
   @IsString()
+  @IsOptional()
   title: string;
 }
+
+export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['id', 'password', 'email'] as const)) {}
