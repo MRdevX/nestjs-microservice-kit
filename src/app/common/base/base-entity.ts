@@ -1,8 +1,8 @@
-import { CreateDateColumn, DeleteDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { BaseEntity, CreateDateColumn, DeleteDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IBaseEntity } from './base-entity.model';
 
-export abstract class Base implements IBaseEntity {
+export abstract class Base extends BaseEntity implements IBaseEntity {
   @PrimaryGeneratedColumn('uuid')
   @ApiProperty({
     type: String,
