@@ -1,7 +1,7 @@
 import { Body, Controller, Param, Post, Put } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { CreateUserDto, UpdateUserDto, UserDto } from '../../models/user/user.dto';
+import { CreateUserDto, UpdateUserDto } from '@root/models/user/user.dto';
 import { CrudController } from '../core/crud/crud.controller';
 import { User } from './user.entity';
 import { UserService } from './user.service';

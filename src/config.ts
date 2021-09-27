@@ -1,7 +1,13 @@
 import dotenv from 'dotenv';
 import convict from 'convict';
+import { Transport } from '@nestjs/microservices';
+import { regexArray } from './app/common/utils/config-schemas';
 
 dotenv.config();
+
+convict.addFormats({
+  regexArray,
+});
 
 const config = convict({
   app: {
@@ -10,6 +16,12 @@ const config = convict({
       format: ['production', 'development', 'staging'],
       default: 'development',
       env: 'NODE_ENV',
+    },
+    cors: {
+      doc: 'CORS allowed origins',
+      format: 'regexArray',
+      default: [],
+      env: 'CORS',
     },
     host: {
       doc: 'The application host url',
@@ -60,6 +72,22 @@ const config = convict({
       format: Boolean,
       default: true,
       env: 'DB_SYNC',
+    },
+  },
+  s2s: {
+    transport: {
+      doc: 'Transport used for s2s communication',
+      format: Number,
+      default: Transport.REDIS,
+      env: 'S2S_TRANSPORT',
+    },
+    options: {
+      url: {
+        doc: 'Redis URL',
+        format: String,
+        default: 'redis://localhost:6379',
+        env: 'S2S_REDIS_URL',
+      },
     },
   },
 });
