@@ -1,33 +1,35 @@
-import { assign, isEmpty, get, set, isArray, each, isString, isObject, filter, isNil, map, merge } from 'lodash';
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { assign, get, set, isArray, each, isString, isObject, filter, isNil, map, merge } from 'lodash';
 import {
-  BaseEntity,
   Brackets,
   DeepPartial,
+  DeleteResult,
   FindConditions,
   FindManyOptions,
   FindOneOptions,
   Repository,
   SelectQueryBuilder,
+  UpdateResult,
 } from 'typeorm';
-import { BaseEntitySearchDto } from '@common/base/base-search.dto';
-import { SearchConfig, VirtualRelationConfig } from '@common/base/search.config.interface';
-import { IRelation } from '@common/base/relation.interface';
-import { QueryNarrowingOperators } from '@common/base/query-operators.enum';
-import { IFilterField } from '@common/base/filter-field.interface';
-import { ErrorMessage } from '@common/enum/error-message.enum';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Base } from '../../common/base';
+import { BaseEntitySearchDto } from '../../common/base/base-search.dto';
+import { IFilterField } from '../../common/interface/filter-field.interface';
+import { QueryNarrowingOperators } from '../../common/enum/query-operators.enum';
+import { IRelation } from '../../common/interface/relation.interface';
+import { SearchConfig, VirtualRelationConfig } from '../../common/interface/search.config.interface';
+import { ErrorMessage } from '../../common/enum/error-message.enum';
+import { ICrudService } from './crud.service.model';
 
-@Injectable()
-export class CrudService<T extends BaseEntity> {
-  private readonly entityName = this.genericRepository.metadata.targetName;
+export abstract class CrudService<T> implements ICrudService<T> {
+  private readonly entityName = this.repository.metadata.targetName;
 
-  constructor(private readonly genericRepository: Repository<T>) {}
+  protected constructor(protected readonly repository: Repository<T>) {}
 
   public async search(options: BaseEntitySearchDto<T>, config: SearchConfig = {}) {
     const searchConfig: SearchConfig = merge(CrudService.defaultSearchConfig, config);
     const { limit, offset } = options;
-    const alias = this.genericRepository.metadata.targetName;
-    let qb = this.genericRepository.createQueryBuilder(alias);
+    const alias = this.repository.metadata.targetName;
+    let qb = this.repository.createQueryBuilder(alias);
 
     if (options.relations.length) {
       for (const relation of options.relations) {
@@ -75,7 +77,7 @@ export class CrudService<T extends BaseEntity> {
     if (options.sortFields?.length) {
       for (let i = 0; i < options.sortFields.length; i++) {
         const column = options.sortFields[i];
-        const path = this.genericRepository.metadata.propertiesMap[column] ? `${alias}.${column}` : column;
+        const path = this.repository.metadata.propertiesMap[column] ? `${alias}.${column}` : column;
         const direction = (options.sortDirections && CrudService.getSortVerb(options.sortDirections[i])) || 'ASC';
         qb = qb.addOrderBy(path, direction);
       }
@@ -91,6 +93,103 @@ export class CrudService<T extends BaseEntity> {
 
     const [items = [], total = 0] = await qb[limitFn](limit)[offsetFn](offset).getManyAndCount();
     return { items, total };
+  }
+
+  public archiveSearch(options: BaseEntitySearchDto<T>, config: SearchConfig = {}) {
+    const alias = this.repository.metadata.targetName;
+
+    if (!this.repository.metadata.deleteDateColumn) {
+      throw new InternalServerErrorException(`Entity ${alias} is not soft-deletable.`);
+    }
+
+    const searchConfig: SearchConfig = merge(config, {
+      withDeleted: true,
+      andWhere: { condition: `${alias}.deleted_date IS NOT NULL` },
+    });
+    return this.search(options, searchConfig);
+  }
+
+  public count(filter?: FindManyOptions<T>): Promise<number> {
+    return this.repository.count(filter);
+  }
+
+  public async findAll(filter?: FindManyOptions<T>): Promise<T[]> {
+    const list: T[] = await this.repository.find(filter);
+    if (!list) {
+      return list;
+    }
+    const relations = this.getFindOptionsRelations('', filter);
+    if (!isArray(relations)) {
+      return list;
+    }
+    return map(list, (entity: T) => {
+      return this.filterDeletedRecords(entity, relations);
+    });
+  }
+
+  public async findOne(
+    id: string | number | FindOneOptions<T> | FindConditions<T>,
+    options?: FindOneOptions<T>,
+  ): Promise<T> {
+    const entity = await this.repository.findOne(id as any, options);
+    if (!entity) {
+      return entity;
+    }
+    const relations = this.getFindOptionsRelations(id, options);
+    if (!isArray(relations)) {
+      return entity;
+    }
+    return this.filterDeletedRecords(entity, relations);
+  }
+
+  public async findById(id: string | number, options?: FindOneOptions<T>): Promise<T> {
+    if (id) {
+      const entity: T = await this.findOne(id, options);
+      if (entity) {
+        return entity;
+      }
+    }
+    throw new NotFoundException(ErrorMessage.Common.EntityNotFound(this.entityName));
+  }
+
+  async create(entity: DeepPartial<T>): Promise<T> {
+    return this.repository.create(entity);
+  }
+
+  async update(id: string, entity: DeepPartial<T>): Promise<UpdateResult> {
+    return await this.repository.update(id, entity);
+  }
+
+  async delete(id: string): Promise<DeleteResult> {
+    return await this.repository.delete(id);
+  }
+
+  public save(entity: DeepPartial<T>): Promise<T> {
+    return this.repository.save(entity);
+  }
+
+  public async remove(records: T[] | DeepPartial<T>[]): Promise<DeleteResult> {
+    let result: T[];
+    if (this.repository?.metadata?.deleteDateColumn) {
+      result = await this.repository.softRemove(records as DeepPartial<T>[]);
+    } else {
+      result = await this.repository.remove(records as T[]);
+    }
+    return {
+      raw: [],
+      affected: result.length,
+    };
+  }
+
+  public async createEntityWithOneRelation<Y extends Base>(
+    entity: any,
+    relationService: ICrudService<Y>,
+    relationKey: string,
+  ) {
+    const relation: Y = await relationService.findById(entity[relationKey]?.id);
+    const entityForCreate = assign({}, entity, { [relationKey]: relation });
+    const model: T = await this.create(entityForCreate);
+    return this.findById(get(model, 'id'), { relations: [relationKey] });
   }
 
   private joinRelation(qb: SelectQueryBuilder<T>, parentEntity: string, relation: string | IRelation<T>) {
@@ -123,13 +222,29 @@ export class CrudService<T extends BaseEntity> {
     return qb;
   }
 
-  private static getSortVerb(number: number) {
-    if (Number(number) === -1) {
-      return 'DESC';
-    }
-    if (Number(number) === 1) {
-      return 'ASC';
-    }
+  private getFindOptionsRelations(
+    id: string | number | FindOneOptions<T> | FindConditions<T>,
+    options?: FindOneOptions<T>,
+  ): string[] {
+    return get(options || id, 'relations');
+  }
+
+  private filterDeletedRecords(entity: T, relations: string[]): T {
+    each(relations, (relation: string) => {
+      if (isString(relation)) {
+        const relationEntity = get(entity, relation);
+        if (isArray(relationEntity)) {
+          const filtered = filter(relationEntity, (rel) => isNil(rel.deletedDate));
+          set(entity, relation, filtered);
+        } else if (isObject(relationEntity)) {
+          const deletedDate = get(relationEntity, 'deletedDate');
+          if (!isNil(deletedDate)) {
+            set(entity, relation, null);
+          }
+        }
+      }
+    });
+    return entity;
   }
 
   private getComparison(filter: IFilterField<T>, value: any): string {
@@ -173,84 +288,12 @@ export class CrudService<T extends BaseEntity> {
     };
   }
 
-  async getAll(): Promise<T[]> {
-    return await this.genericRepository.find();
-  }
-
-  public async findById(id: string | number, options?: FindOneOptions<T>): Promise<T> {
-    if (id) {
-      const entity: T = await this.findOne(id, options);
-      if (entity) {
-        return entity;
-      }
+  private static getSortVerb(number: number) {
+    if (Number(number) === -1) {
+      return 'DESC';
     }
-    throw new NotFoundException(ErrorMessage.Common.EntityNotFound(this.entityName));
-  }
-
-  public async findOne(
-    id: string | number | FindOneOptions<T> | FindConditions<T>,
-    options?: FindOneOptions<T>,
-  ): Promise<T> {
-    const entity = await this.genericRepository.findOne(id as any, options);
-    if (!entity) {
-      return entity;
+    if (Number(number) === 1) {
+      return 'ASC';
     }
-    const relations = this.getFindOptionsRelations(id, options);
-    if (!isArray(relations)) {
-      return entity;
-    }
-    return this.filterDeletedRecords(entity, relations);
-  }
-
-  private filterDeletedRecords(entity: T, relations: string[]): T {
-    each(relations, (relation: string) => {
-      if (isString(relation)) {
-        const relationEntity = get(entity, relation);
-        if (isArray(relationEntity)) {
-          const filtered = filter(relationEntity, (rel) => isNil(rel.deletedDate));
-          set(entity, relation, filtered);
-        } else if (isObject(relationEntity)) {
-          const deletedDate = get(relationEntity, 'deletedDate');
-          if (!isNil(deletedDate)) {
-            set(entity, relation, null);
-          }
-        }
-      }
-    });
-    return entity;
-  }
-
-  private getFindOptionsRelations(
-    id: string | number | FindOneOptions<T> | FindConditions<T>,
-    options?: FindOneOptions<T>,
-  ): string[] {
-    return get(options || id, 'relations');
-  }
-
-  public async findAll(filter?: FindManyOptions<T>): Promise<T[]> {
-    const list: T[] = await this.genericRepository.find(filter);
-    if (!list) {
-      return list;
-    }
-    const relations = this.getFindOptionsRelations('', filter);
-    if (!isArray(relations)) {
-      return list;
-    }
-    return map(list, (entity: T) => {
-      return this.filterDeletedRecords(entity, relations);
-    });
-  }
-
-  async create(entity: DeepPartial<T>): Promise<T> {
-    return await this.genericRepository.create(entity).save();
-  }
-
-  async update(id: string, entity: DeepPartial<T>): Promise<T> {
-    await this.genericRepository.update(id, entity);
-    return this.findById(id);
-  }
-
-  async delete(id: string): Promise<any> {
-    return await this.genericRepository.delete(id);
   }
 }

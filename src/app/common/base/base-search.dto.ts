@@ -1,9 +1,9 @@
 import { Transform, Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, Max, Min, IsString, IsArray } from 'class-validator';
 import { toNumber } from 'lodash';
-import { IBaseSearchDto } from './base-search.interface';
-import { IFilterField } from './filter-field.interface';
-import { IRelation } from './relation.interface';
+import { IBaseSearchDto } from './base-search.model';
+import { IFilterField } from '../interface/filter-field.interface';
+import { IRelation } from '../interface/relation.interface';
 
 export abstract class BaseEntitySearchDto<T> implements IBaseSearchDto<T> {
   @IsOptional()

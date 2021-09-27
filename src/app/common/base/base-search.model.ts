@@ -1,4 +1,4 @@
-import { IFilterField } from './filter-field.interface';
+import { IFilterField } from '../interface/filter-field.interface';
 
 export interface IBaseSearchDto<T> {
   [fieldName: string]: any;

@@ -1,11 +1,14 @@
-import { Get, Post, Delete, Body, Param, Patch, HttpStatus, Query, ParseArrayPipe } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { BaseEntity } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
+import { Get, Post, Put, Delete, Body, Param, HttpStatus, HttpCode, Query, ParseArrayPipe } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseEntitySearchDto } from '@common/base/base-search.dto';
 import { ICrudService } from './crud.service.model';
 
-export class CrudController<T extends BaseEntity> {
-  constructor(private readonly crudService: ICrudService<T>) {}
+@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
+@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden' })
+@ApiBearerAuth()
+export abstract class CrudController<T> {
+  protected constructor(private readonly crudService: ICrudService<T>) {}
 
   @ApiOperation({ summary: 'Search paginated' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Found records' })
@@ -29,25 +32,37 @@ export class CrudController<T extends BaseEntity> {
     return this.crudService.findById(id);
   }
 
+  @ApiOperation({ summary: 'Create a new record' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input, The response body may contain clues as to what went wrong',
+  })
+  @HttpCode(HttpStatus.CREATED)
   @Post()
-  @ApiResponse({ status: 201, description: 'The record has been successfully created.' })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
   async create(@Body() entity: T): Promise<T> {
     return this.crudService.create(entity);
   }
 
-  @Delete(':id')
-  @ApiResponse({ status: 200, description: 'Entity deleted successfully.' })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  async delete(@Param('id') id: string) {
-    this.crudService.delete(id);
+  @ApiOperation({ summary: 'Update an existing record' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully edited.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input, The response body may contain clues as to what went wrong',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() entity: T): Promise<UpdateResult> {
+    return this.crudService.update(id, entity);
   }
 
-  @Patch(':id')
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  @ApiResponse({ status: 200, description: 'Entity deleted successfully.' })
-  async update(@Param('id') id: string, @Body() entity: T): Promise<T> {
-    return this.crudService.update(id, entity);
+  @ApiOperation({ summary: 'Delete a record' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The record has been successfully deleted' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Delete(':id')
+  async delete(@Param('id') id: string): Promise<DeleteResult> {
+    return this.crudService.delete(id);
   }
 }
