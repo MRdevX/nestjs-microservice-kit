@@ -1,4 +1,4 @@
-import { Get, Post, Delete, Put, Body, Param, Patch } from '@nestjs/common';
+import { Get, Post, Delete, Body, Param, Patch } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { BaseEntity } from 'typeorm';
 import { ICrudService } from './crud.service.model';
