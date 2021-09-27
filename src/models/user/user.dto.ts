@@ -1,7 +1,6 @@
 import { IsEmail, IsOptional, IsString } from 'class-validator';
-import { Exclude } from 'class-transformer';
 import { IUser } from './user.model';
-import { ApiProperty, OmitType, PartialType, PickType, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto implements IUser {
   id?: string;
