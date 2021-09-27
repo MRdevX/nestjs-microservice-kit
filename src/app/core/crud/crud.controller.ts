@@ -40,7 +40,7 @@ export abstract class CrudController<T> {
   })
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async create(@Body() entity: T): Promise<T> {
+  async create(@Body() entity: T, ...args: any[]): Promise<T> {
     return this.crudService.create(entity);
   }
 

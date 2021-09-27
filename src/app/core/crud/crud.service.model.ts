@@ -8,6 +8,6 @@ export interface ICrudService<T> {
   findOne(id: string | number | FindOneOptions<T> | FindConditions<T>, options?: FindOneOptions<T>): Promise<T>;
   findById(id: string, options?: FindOneOptions<T>): Promise<T>;
   update(id: string, entity: T): Promise<UpdateResult>;
-  create(entity: T): Promise<T>;
+  create(entity: T, ...options: any[]): Promise<T>;
   delete(id: string): Promise<DeleteResult>;
 }
