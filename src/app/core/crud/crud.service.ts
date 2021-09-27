@@ -1,9 +1,166 @@
-import { Injectable } from '@nestjs/common';
-import { Repository, BaseEntity, DeepPartial } from 'typeorm';
+import { isNil, merge } from 'lodash';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BaseEntity, Brackets, DeepPartial, Repository, SelectQueryBuilder } from 'typeorm';
+import { BaseEntitySearchDto } from '@common/base/base-search.dto';
+import { SearchConfig, VirtualRelationConfig } from '@common/base/search.config.interface';
+import { IRelation } from '@common/base/relation.interface';
+import { QueryNarrowingOperators } from '@common/base/query-operators.enum';
+import { IFilterField } from '@common/base/filter-field.interface';
+import { ErrorMessage } from '@common/enum/error-message.enum';
 
 @Injectable()
 export class CrudService<T extends BaseEntity> {
   constructor(private readonly genericRepository: Repository<T>) {}
+
+  public async search(options: BaseEntitySearchDto<T>, config: SearchConfig = {}) {
+    const searchConfig: SearchConfig = merge(CrudService.defaultSearchConfig, config);
+    const { limit, offset } = options;
+    const alias = this.genericRepository.metadata.targetName;
+    let qb = this.genericRepository.createQueryBuilder(alias);
+
+    if (options.relations.length) {
+      for (const relation of options.relations) {
+        this.joinRelation(qb, alias, relation);
+      }
+    }
+
+    if (searchConfig.virtualRelations.length) {
+      for (const relation of searchConfig.virtualRelations) {
+        this.joinVirtual(qb, alias, relation);
+      }
+    }
+
+    for (const filter of options.filterFields) {
+      const column = filter.relationTarget
+        ? filter.relationTarget
+        : alias.concat('.', (filter.target as string) || (filter.name as string));
+      if (!isNil(options[filter.name])) {
+        qb = qb.andWhere(`${column} ${this.getComparison(filter, options[filter.name])}`, {
+          [filter.name]: options[filter.name],
+        });
+      }
+    }
+
+    if (options.searchInput && options.searchFields && options.searchFields.length) {
+      const query = searchConfig.fullTextSearch ? options.fullTextSearchInput : options.searchInput;
+      const operator = searchConfig.caseInsensitiveSearch ? 'ILIKE' : 'LIKE';
+
+      const brackets = new Brackets((qb) => {
+        for (const field of options.searchFields) {
+          qb.orWhere(`${alias}.${field} ${operator} :query`, { query });
+        }
+      });
+      qb = qb.andWhere(brackets);
+    }
+
+    if (searchConfig.andWhere) {
+      qb = qb.andWhere(searchConfig.andWhere.condition, searchConfig.andWhere.parameters);
+    }
+
+    if (options.selectFields.length) {
+      qb = qb.select(options.selectFields.map((col) => `${alias}.${col}`));
+    }
+
+    if (options.sortFields?.length) {
+      for (let i = 0; i < options.sortFields.length; i++) {
+        const column = options.sortFields[i];
+        const path = this.genericRepository.metadata.propertiesMap[column] ? `${alias}.${column}` : column;
+        const direction = (options.sortDirections && CrudService.getSortVerb(options.sortDirections[i])) || 'ASC';
+        qb = qb.addOrderBy(path, direction);
+      }
+    }
+
+    if (searchConfig.withDeleted) {
+      qb = qb.withDeleted();
+    }
+
+    // take/skip is generally recommended by typeorm, but behaves unexpected when adding virtualRelations
+    const limitFn = searchConfig.virtualRelations.length ? 'limit' : 'take';
+    const offsetFn = searchConfig.virtualRelations.length ? 'offset' : 'skip';
+
+    const [items = [], total = 0] = await qb[limitFn](limit)[offsetFn](offset).getManyAndCount();
+    return { items, total };
+  }
+
+  private joinRelation(qb: SelectQueryBuilder<T>, parentEntity: string, relation: string | IRelation<T>) {
+    const config: IRelation<T> = typeof relation === 'string' ? { name: relation, innerJoin: false } : relation;
+    const propertyPath = config.name.includes('.') ? config.name : `${parentEntity}.${config.name}`;
+    const relationAlias = config.name.includes('.') ? config.name.split('.').pop() : config.name;
+    if (config.innerJoin) {
+      qb = qb.innerJoinAndSelect(propertyPath, relationAlias);
+    } else {
+      qb = qb.leftJoinAndSelect(propertyPath, relationAlias);
+    }
+    return qb;
+  }
+
+  private joinVirtual(qb: SelectQueryBuilder<T>, parentEntity: string, relation: VirtualRelationConfig) {
+    const { entity, property, alias: relAlias, condition, plural = false, innerJoin = false } = relation;
+    if (plural) {
+      if (innerJoin) {
+        qb = qb.innerJoinAndMapMany(`${parentEntity}.${property || relAlias}`, entity, relAlias, condition);
+      } else {
+        qb = qb.leftJoinAndMapMany(`${parentEntity}.${property || relAlias}`, entity, relAlias, condition);
+      }
+    } else {
+      if (innerJoin) {
+        qb = qb.innerJoinAndMapOne(`${parentEntity}.${property || relAlias}`, entity, relAlias, condition);
+      } else {
+        qb = qb.leftJoinAndMapOne(`${parentEntity}.${property || relAlias}`, entity, relAlias, condition);
+      }
+    }
+    return qb;
+  }
+
+  private static getSortVerb(number: number) {
+    if (Number(number) === -1) {
+      return 'DESC';
+    }
+    if (Number(number) === 1) {
+      return 'ASC';
+    }
+  }
+
+  private getComparison(filter: IFilterField<T>, value: any): string {
+    const { operation, name } = filter;
+    switch (operation) {
+      case QueryNarrowingOperators.EQ:
+        return `= :${name}`;
+      case QueryNarrowingOperators.NE:
+        return `!= :${name}`;
+      case QueryNarrowingOperators.GT:
+        return `> :${name}`;
+      case QueryNarrowingOperators.GTE:
+        return `>= :${name}`;
+      case QueryNarrowingOperators.LT:
+        return `< :${name}`;
+      case QueryNarrowingOperators.LTE:
+        return `<= :${name}`;
+      case QueryNarrowingOperators.LIKE:
+        return `LIKE concat('%', :${name}::text, '%')`;
+      case QueryNarrowingOperators.ILIKE:
+        return `ILIKE concat('%', :${name}::text, '%')`;
+      case QueryNarrowingOperators.IN:
+        return `= ANY(:${name})`;
+      case QueryNarrowingOperators.NIN:
+        return `<> ALL(:${name})`;
+      case QueryNarrowingOperators.CONTAINS:
+        return `@> ARRAY[:...${name}]`;
+      case QueryNarrowingOperators.ISNULL:
+        return Boolean(value) === true ? 'IS NOT NULL' : 'IS NULL';
+      default:
+        throw new InternalServerErrorException(ErrorMessage.Common.BadSearchOperator(operation, name));
+    }
+  }
+
+  private static get defaultSearchConfig(): SearchConfig {
+    return {
+      virtualRelations: [],
+      caseInsensitiveSearch: true,
+      fullTextSearch: true,
+      withDeleted: false,
+    };
+  }
 
   async getAll(): Promise<T[]> {
     return await this.genericRepository.find();
