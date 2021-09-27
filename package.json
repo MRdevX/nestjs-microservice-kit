@@ -1,6 +1,6 @@
 {
   "name": "nestjs-microservice-kit",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "author": "Mahdi Rashidi <m8rashidi@gmail.com>",
   "private": true,
@@ -56,7 +56,7 @@
     "@types/swagger-ui-express": "^4.1.3",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
-    "class-transformer": "^0.4.0",
+    "class-transformer": "0.3.1",
     "class-validator": "^0.13.1",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",

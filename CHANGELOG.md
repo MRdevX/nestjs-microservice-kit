@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.8](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.7...v0.0.8) (2021-09-27)
+
+
+### Features
+
+* add generic crud search ([8de43e3](https://github.com/MRdevX/nestjs-microservice-kit/commit/8de43e3f31834c736923dfe9c5158938b59bfee5))
+* add generic query services ([719b797](https://github.com/MRdevX/nestjs-microservice-kit/commit/719b79786d809e0dfd466190efb3abfbeb1dc36d))
+* update generic crud service and controller ([bedd3a5](https://github.com/MRdevX/nestjs-microservice-kit/commit/bedd3a56b5058e6d8a95abbad2ab50ebeb2e09bc))
+
 ### [0.0.7](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.6...v0.0.7) (2021-09-27)
 
 
