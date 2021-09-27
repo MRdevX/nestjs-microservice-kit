@@ -1,6 +1,15 @@
-import { isNil, merge } from 'lodash';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { BaseEntity, Brackets, DeepPartial, Repository, SelectQueryBuilder } from 'typeorm';
+import { assign, isEmpty, get, set, isArray, each, isString, isObject, filter, isNil, map, merge } from 'lodash';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BaseEntity,
+  Brackets,
+  DeepPartial,
+  FindConditions,
+  FindManyOptions,
+  FindOneOptions,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { BaseEntitySearchDto } from '@common/base/base-search.dto';
 import { SearchConfig, VirtualRelationConfig } from '@common/base/search.config.interface';
 import { IRelation } from '@common/base/relation.interface';
@@ -10,6 +19,8 @@ import { ErrorMessage } from '@common/enum/error-message.enum';
 
 @Injectable()
 export class CrudService<T extends BaseEntity> {
+  private readonly entityName = this.genericRepository.metadata.targetName;
+
   constructor(private readonly genericRepository: Repository<T>) {}
 
   public async search(options: BaseEntitySearchDto<T>, config: SearchConfig = {}) {
@@ -166,8 +177,68 @@ export class CrudService<T extends BaseEntity> {
     return await this.genericRepository.find();
   }
 
-  async getOne(id: string): Promise<T> {
-    return await this.genericRepository.findOne(id);
+  public async findById(id: string | number, options?: FindOneOptions<T>): Promise<T> {
+    if (id) {
+      const entity: T = await this.findOne(id, options);
+      if (entity) {
+        return entity;
+      }
+    }
+    throw new NotFoundException(ErrorMessage.Common.EntityNotFound(this.entityName));
+  }
+
+  public async findOne(
+    id: string | number | FindOneOptions<T> | FindConditions<T>,
+    options?: FindOneOptions<T>,
+  ): Promise<T> {
+    const entity = await this.genericRepository.findOne(id as any, options);
+    if (!entity) {
+      return entity;
+    }
+    const relations = this.getFindOptionsRelations(id, options);
+    if (!isArray(relations)) {
+      return entity;
+    }
+    return this.filterDeletedRecords(entity, relations);
+  }
+
+  private filterDeletedRecords(entity: T, relations: string[]): T {
+    each(relations, (relation: string) => {
+      if (isString(relation)) {
+        const relationEntity = get(entity, relation);
+        if (isArray(relationEntity)) {
+          const filtered = filter(relationEntity, (rel) => isNil(rel.deletedDate));
+          set(entity, relation, filtered);
+        } else if (isObject(relationEntity)) {
+          const deletedDate = get(relationEntity, 'deletedDate');
+          if (!isNil(deletedDate)) {
+            set(entity, relation, null);
+          }
+        }
+      }
+    });
+    return entity;
+  }
+
+  private getFindOptionsRelations(
+    id: string | number | FindOneOptions<T> | FindConditions<T>,
+    options?: FindOneOptions<T>,
+  ): string[] {
+    return get(options || id, 'relations');
+  }
+
+  public async findAll(filter?: FindManyOptions<T>): Promise<T[]> {
+    const list: T[] = await this.genericRepository.find(filter);
+    if (!list) {
+      return list;
+    }
+    const relations = this.getFindOptionsRelations('', filter);
+    if (!isArray(relations)) {
+      return list;
+    }
+    return map(list, (entity: T) => {
+      return this.filterDeletedRecords(entity, relations);
+    });
   }
 
   async create(entity: DeepPartial<T>): Promise<T> {
@@ -176,7 +247,7 @@ export class CrudService<T extends BaseEntity> {
 
   async update(id: string, entity: DeepPartial<T>): Promise<T> {
     await this.genericRepository.update(id, entity);
-    return this.getOne(id);
+    return this.findById(id);
   }
 
   async delete(id: string): Promise<any> {

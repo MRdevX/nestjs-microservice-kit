@@ -1,22 +1,32 @@
-import { Get, Post, Delete, Body, Param, Patch } from '@nestjs/common';
-import { ApiResponse } from '@nestjs/swagger';
+import { Get, Post, Delete, Body, Param, Patch, HttpStatus, Query, ParseArrayPipe } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BaseEntity } from 'typeorm';
+import { BaseEntitySearchDto } from '@common/base/base-search.dto';
 import { ICrudService } from './crud.service.model';
 
 export class CrudController<T extends BaseEntity> {
   constructor(private readonly crudService: ICrudService<T>) {}
 
+  @ApiOperation({ summary: 'Search paginated' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Found records' })
   @Get()
-  @ApiResponse({ status: 200, description: 'Ok' })
-  async findAll(): Promise<T[]> {
-    return this.crudService.getAll();
+  async search(@Query() options?: BaseEntitySearchDto<T>, ...args: any[]): Promise<{ items: T[]; total: number }> {
+    return this.crudService.search(options);
   }
 
+  @ApiOperation({ summary: 'Find by id' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
   @Get(':id')
-  @ApiResponse({ status: 200, description: 'Entity retrieved successfully.' })
-  @ApiResponse({ status: 404, description: 'Entity does not exist' })
-  async findById(@Param('id') id: string): Promise<T> {
-    return this.crudService.getOne(id);
+  async findById(
+    @Param('id') id: string,
+    @Query('relations', new ParseArrayPipe({ optional: true })) relations?: string[],
+    ...args: any[]
+  ): Promise<T> {
+    if (relations) {
+      return this.crudService.findById(id, { relations });
+    }
+    return this.crudService.findById(id);
   }
 
   @Post()
