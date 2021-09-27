@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.7](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.6...v0.0.7) (2021-09-27)
+
+
+### Bug Fixes
+
+* crud controller issues ([3cf8ee3](https://github.com/MRdevX/nestjs-microservice-kit/commit/3cf8ee30a65cab1aa3c78dccaaabed0ad595265e))
+* make title nullable ([d6414a9](https://github.com/MRdevX/nestjs-microservice-kit/commit/d6414a9e0b09771783fabe853675f506044fba17))
+* remove redundant create method ([5d5ca60](https://github.com/MRdevX/nestjs-microservice-kit/commit/5d5ca603552f5ea10ab6dc3a311c89c238558f8f))
+
 ### [0.0.6](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.5...v0.0.6) (2021-09-16)
 
 
