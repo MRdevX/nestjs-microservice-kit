@@ -1,4 +1,4 @@
-import { BaseEntity, CreateDateColumn, DeleteDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { BaseEntity, CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IBaseEntity } from './base-entity.model';
 
@@ -17,7 +17,4 @@ export abstract class Base extends BaseEntity implements IBaseEntity {
   @UpdateDateColumn({ type: 'timestamptz' })
   @ApiProperty()
   updatedAt?: Date;
-
-  @DeleteDateColumn()
-  deletedDate?: Date;
 }

@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import convict from 'convict';
 import { Transport } from '@nestjs/microservices';
-import { regexArray } from './app/common/utils/config-schemas';
+import { regexArray } from './app/common/config/config-schemas';
 
 dotenv.config();
 
@@ -26,7 +26,7 @@ const config = convict({
     host: {
       doc: 'The application host url',
       format: 'url',
-      default: '127.0.0.1',
+      default: '0.0.0.0',
       env: 'HOST',
     },
     port: {
