@@ -66,6 +66,7 @@ $ npm run test:cov
 
 ## Features
 
+- **Generic CRUD**: Generic CRUD Controller and Service
 - **SQL database**: [PostgreSQL](https://www.postgresql.org) object data modeling using [TypeORM](https://typeorm.io)
 - **Testing**: unit and integration tests using [Jest](https://jestjs.io)
 - **Error handling**: centralized error handling mechanism
