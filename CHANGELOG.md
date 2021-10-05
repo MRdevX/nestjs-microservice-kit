@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.10](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.9...v0.0.10) (2021-10-05)
+
+
+### Features
+
+* optimize config and main ([f252e9a](https://github.com/MRdevX/nestjs-microservice-kit/commit/f252e9a70590154b8a52f387290f9fadd3350556))
+* optimize generic crud ([4ab54bb](https://github.com/MRdevX/nestjs-microservice-kit/commit/4ab54bba58ebe694427d5d1b40410b3648ff00f7))
+* optimize generic crud ([6bd0d3b](https://github.com/MRdevX/nestjs-microservice-kit/commit/6bd0d3b599aa6c7fd9e9e5a2196e641c0b2175d3))
+* upgrade all packages ([1e777ab](https://github.com/MRdevX/nestjs-microservice-kit/commit/1e777abe0a236d8098838c1ad1a751cdcc2e021d))
+
 ### [0.0.9](https://github.com/MRdevX/nestjs-microservice-kit/compare/v0.0.8...v0.0.9) (2021-09-27)
 
 
