@@ -1,4 +1,3 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   Repository,
   BaseEntity,
@@ -6,13 +5,12 @@ import {
   DeleteResult,
   UpdateResult,
   FindOneOptions,
-  FindConditions,
   SelectQueryBuilder,
 } from 'typeorm';
-import { ErrorMessage } from '@root/app/common/enum/error-message.enum';
 import { ICrudService } from './crud.service.model';
 import { BaseEntitySearchDto } from '@root/app/common/base/base-search.dto';
 import { IRelation } from '@root/app/common/base/relation.interface';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class CrudService<T extends BaseEntity> implements ICrudService<T> {
@@ -32,7 +30,7 @@ export class CrudService<T extends BaseEntity> implements ICrudService<T> {
     }
 
     if (options.selectFields.length) {
-      qb = qb.select(options.selectFields.map((col) => `${alias}.${col}`));
+      qb = qb.select(options.selectFields.map((col) => `${alias}.${String(col)}`));
     }
 
     const [items = [], total = 0] = await qb['limit'](limit)['offset'](offset).getManyAndCount();
@@ -43,41 +41,24 @@ export class CrudService<T extends BaseEntity> implements ICrudService<T> {
     return await this.genericRepository.find();
   }
 
-  async getOne(id: string): Promise<T> {
-    return await this.genericRepository.findOne(id);
-  }
-
   async create<E extends DeepPartial<T>>(entity: E): Promise<T> {
     return await this.genericRepository.create(entity).save();
   }
 
-  async update(id: string, entity: DeepPartial<T>): Promise<UpdateResult> {
-    return await this.genericRepository.update(id, entity);
-  }
+  // async update(id: string, entity: DeepPartial<T>): Promise<UpdateResult> {
+  //   return await this.genericRepository.update(id, entity);
+  // }
 
   async delete(id: string): Promise<DeleteResult> {
     return await this.genericRepository.delete(id);
   }
 
-  public async findOne(
-    id: string | number | FindOneOptions<T> | FindConditions<T>,
-    options?: FindOneOptions<T>,
-  ): Promise<T> {
-    const result = await this.genericRepository.findOne(id as any, options);
+  public async findOne(options: FindOneOptions<T>): Promise<T> {
+    const result = await this.genericRepository.findOne(options);
     if (!result) {
       return result;
     }
     return result;
-  }
-
-  public async findById(id: string | number, options?: FindOneOptions<T>): Promise<T> {
-    if (id) {
-      const result: T = await this.findOne(id, options);
-      if (result) {
-        return result;
-      }
-    }
-    throw new NotFoundException(ErrorMessage.Common.EntityNotFound(this.entityName));
   }
 
   private joinRelation(qb: SelectQueryBuilder<T>, parentEntity: string, relation: string | IRelation<T>) {

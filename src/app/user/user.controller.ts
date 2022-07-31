@@ -20,9 +20,9 @@ export class UserController extends CrudController<User> {
     return createdUser;
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update an User' })
-  async update(@Param('id') id: string, @Body() userData: UpdateUserDto): Promise<UpdateResult> {
-    return this.userService.update(id, userData);
-  }
+  // @Put(':id')
+  // @ApiOperation({ summary: 'Update an User' })
+  // async update(@Param('id') id: string, @Body() userData: UpdateUserDto): Promise<UpdateResult> {
+  //   return this.userService.update(id, userData);
+  // }
 }
