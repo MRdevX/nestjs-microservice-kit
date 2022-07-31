@@ -19,7 +19,7 @@ export class CrudController<T> {
   @ApiResponse({ status: HttpStatus.OK, description: 'Entity retrieved successfully.' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Entity does not exist' })
   async findById(@Param('id') id: string, @Query() query?: any): Promise<Partial<T>> {
-    return this.crudService.findById(id);
+    return this.crudService.findOne(id);
   }
 
   @Post()
@@ -34,13 +34,13 @@ export class CrudController<T> {
     return this.crudService.create(entity);
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update an existing record.' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Entity updated successfully.' })
-  async update(@Param('id') id: string, @Body() entity: T): Promise<UpdateResult | T> {
-    return this.crudService.update(id, entity);
-  }
+  // @Patch(':id')
+  // @ApiOperation({ summary: 'Update an existing record.' })
+  // @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
+  // @ApiResponse({ status: HttpStatus.OK, description: 'Entity updated successfully.' })
+  // async update(@Param('id') id: string, @Body() entity: T): Promise<UpdateResult | T> {
+  //   return this.crudService.update(id, entity);
+  // }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a record.' })
